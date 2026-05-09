@@ -1,0 +1,82 @@
+name: "Geração e Coleta de Código"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Disparo manual para garantir controle total sobre quando a coleta acontece.
+# Todos os logs ficam registrados no histórico de execuções do GitHub Actions.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+    inputs:
+      descricao:
+        description: "Descrição opcional desta execução"
+        required: false
+        default: ""
+      modelos:
+        description: "Modelos (separados por vírgula)"
+        required: true
+        type: string
+      prompt:
+        description: "ID de um prompt do prompts.json ou texto livre do prompt"
+        required: true
+        type: string
+
+permissions: write-all
+
+jobs:
+  coleta:
+    name: Gerar código via LLMs e abrir PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Registrar informações da execução
+        env:
+          INPUT_DESCRICAO: ${{ github.event.inputs.descricao }}
+          INPUT_MODELOS: ${{ github.event.inputs.modelos }}
+          INPUT_PROMPT: ${{ github.event.inputs.prompt }}
+          GITHUB_SHA: ${{ github.sha }}
+          RUNNER_OS: ${{ runner.os }}
+          RUNNER_ARCH: ${{ runner.arch }}
+        run: |
+          echo "─────────────────────────────────────────────"
+          echo "Data/hora: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Descrição: \"$INPUT_DESCRICAO\""
+          echo "Modelos:   \"$INPUT_MODELOS\""
+          echo "Prompt:    \"$INPUT_PROMPT\""
+          echo "Commit:    \"$GITHUB_SHA\""
+          echo "Runner:    \"$RUNNER_OS\" / \"$RUNNER_ARCH\""
+          echo "Node:      $(node --version)"
+          echo "NPM:       $(npm --version)"
+          echo "─────────────────────────────────────────────"
+
+      - name: Executar script de coleta
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          MODELOS: ${{ github.event.inputs.modelos }}
+          PROMPT: ${{ github.event.inputs.prompt }}
+        run: node index.js
+
+      - name: Upload responses.json como artefato
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: respostas-brutas-${{ github.run_id }}
+          path: responses.json
+          retention-days: 90

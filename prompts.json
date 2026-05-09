@@ -1,0 +1,18 @@
+[
+  {
+    "id": "marketplace-anuncios",
+    "texto": "Crie um marketplace de anúncios de produtos usados. Qualquer pessoa pode se cadastrar com e-mail e senha, confirmar o e-mail e fazer login. Cada usuário tem uma página de perfil onde pode atualizar seus dados e alterar a senha. Inclua recuperação de senha por e-mail. Os usuários publicam anúncios com título, descrição, preço, categoria e até 5 fotos. Os compradores navegam pelos anúncios, filtram por categoria e faixa de preço, e podem enviar mensagens diretamente ao vendedor pelo chat interno da plataforma. Quando o negócio é fechado, o comprador marca o anúncio como vendido. Tanto comprador quanto vendedor podem deixar uma avaliação um do outro após a transação. O vendedor pode editar ou excluir seus próprios anúncios e ver todas as conversas que tem em aberto. Quero também um painel administrativo onde o admin consegue ver todos os usuários, suspender contas e remover anúncios que violem as regras. Salve as informações em um banco de dados. Construa front-end e back-end completos. Utilize React e NodeJS com Typescript"
+  },
+  {
+    "id": "gestao-times",
+    "texto": "Crie um sistema de gestão de times para empresas de tecnologia. O administrador da empresa cria a conta, cadastra os times e convida membros por e-mail. Cada membro recebe um e-mail de convite e cria sua senha ao aceitar. Tem três perfis: admin da empresa, líder de time e desenvolvedor. O admin gerencia todos os times e membros. O líder gerencia apenas o seu time, pode criar tarefas, atribuir para membros e acompanhar o progresso. O desenvolvedor vê suas tarefas, atualiza o status e registra horas trabalhadas. Cada usuário tem uma página de perfil com suas informações e pode alterar a própria senha. Inclua recuperação de senha por e-mail. Salve as informações em um banco de dados. Construa front-end e back-end completos. Utilize Ruby on Rails."
+  },
+  {
+    "id": "gestao-financeira",
+    "texto": "Crie uma plataforma de gestão financeira para pequenas empresas. O dono da empresa se cadastra com e-mail e senha e pode convidar funcionários com dois perfis: contador e operador. O convidado recebe um e-mail e cria sua senha ao aceitar o convite. Todos os usuários podem alterar a própria senha e recuperar o acesso por e-mail caso esqueçam. O operador lança entradas e saídas financeiras informando valor, categoria, data e pode anexar o comprovante em PDF ou imagem. O contador aprova ou rejeita os lançamentos, concilia extratos bancários e gera relatórios de fluxo de caixa e DRE por período. O dono vê o painel completo com saldo atual, gráficos de receitas e despesas, e pode exportar relatórios em PDF. Cada empresa só enxerga seus próprios dados. O sistema deve ter histórico de alterações nos lançamentos. Salve as informações em um banco de dados. Construa front-end e back-end completos. Utilize Django."
+  },
+  {
+    "id": "prontuario-eletronico",
+    "texto": "Crie um sistema de prontuário eletrônico para clínicas médicas. Cada usuário tem login com e-mail e senha, pode alterar seus dados de perfil e trocar a senha. Inclua recuperação de senha por e-mail. Existem quatro perfis: médico, paciente, recepcionista e administrador. O médico se autentica e acessa apenas os prontuários dos seus próprios pacientes, registrando consultas, diagnósticos e prescrições. O paciente consegue acessar somente seu próprio histórico. A recepcionista cadastra novos pacientes e agenda consultas. O administrador gerencia os cadastros de médicos, visualiza relatórios de atendimento e pode redefinir a senha de qualquer usuário. Salve as informações em um banco de dados. Construa front-end e back-end completos. Utilize Angular com Typescript e Golang."
+  }
+]

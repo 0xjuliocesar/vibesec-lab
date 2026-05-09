@@ -1,0 +1,35 @@
+name: "Semgrep"
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Número do Pull Request associado ao scan"
+        required: true
+        type: string
+
+permissions: write-all
+
+jobs:
+  full-scan:
+    name: "Semgrep / Full Scan"
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Semgrep full scan
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+          SEMGREP_TIMEOUT: "60"
+          SEMGREP_PR_ID: ${{ github.event.inputs.pr_number }}
+        run: |
+          semgrep ci \
+            --code \
+            --pro \
+            --supply-chain \
+            --no-suppress-errors

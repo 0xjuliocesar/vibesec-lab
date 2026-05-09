@@ -1,0 +1,144 @@
+name: "Gerar Lockfiles"
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_ref:
+        description: "Branch para gerar lockfiles (ex: tcc/prompt/modelo-123)"
+        required: false
+        type: string
+      pr_number:
+        description: "Número do PR para resolver branch (fallback)"
+        required: false
+        type: string
+
+permissions: write-all
+
+jobs:
+  gerar-locks:
+    name: Gerar lockfiles e commitar
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolver branch do PR
+        id: resolver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_BRANCH_REF: ${{ inputs.branch_ref }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+        run: |
+          if [ -n "$INPUT_BRANCH_REF" ]; then
+            BRANCH="$INPUT_BRANCH_REF"
+          elif [ -n "$INPUT_PR_NUMBER" ]; then
+            BRANCH=$(gh api "repos/$GITHUB_REPOSITORY_NAME/pulls/$INPUT_PR_NUMBER" --jq '.head.ref')
+          else
+            echo "É obrigatório informar branch_ref ou pr_number."
+            exit 1
+          fi
+          echo "branch_ref=$BRANCH" >> "$GITHUB_OUTPUT"
+      - name: Checkout do PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolver.outputs.branch_ref }}
+
+      - name: Encontrar pasta do código gerado
+        id: encontrar
+        env:
+          BRANCH_REF: ${{ steps.resolver.outputs.branch_ref }}
+        run: |
+          BRANCH="$BRANCH_REF"
+          echo "Branch: $BRANCH"
+
+          PROMPT_ID=$(echo "$BRANCH" | cut -d'/' -f2)
+          MODELO_SLUG=$(echo "$BRANCH" | cut -d'/' -f3 | sed 's/-[0-9]*$//')
+
+          PASTA="${PROMPT_ID}/${MODELO_SLUG}"
+          echo "Pasta detectada: $PASTA"
+
+          if [ -d "$PASTA" ]; then
+            echo "pasta=$PASTA" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠ Pasta $PASTA não encontrada."
+            echo "pasta=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.encontrar.outputs.pasta != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        if: steps.encontrar.outputs.pasta != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Ruby
+        if: steps.encontrar.outputs.pasta != ''
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Instalar dependências para gerar lock files
+        if: steps.encontrar.outputs.pasta != ''
+        env:
+          PASTA_OUTPUT: ${{ steps.encontrar.outputs.pasta }}
+        run: |
+          PASTA="$PASTA_OUTPUT"
+          cd "$PASTA"
+
+          # Node.js — busca package.json em todas as subpastas (backend, frontend, raiz...)
+          while IFS= read -r pkg; do
+            dir=$(dirname "$pkg")
+            echo "📦 Detectado: Node.js em $dir"
+            pushd "$dir" > /dev/null
+            if [ -f "package-lock.json" ] || [ -f "yarn.lock" ]; then
+              echo "  ↳ Lock file já existente"
+            else
+              npm install --package-lock-only --ignore-scripts --legacy-peer-deps 2>/dev/null \
+                || npm install --package-lock-only --ignore-scripts 2>/dev/null \
+                || echo "⚠ npm falhou em $dir"
+            fi
+            popd > /dev/null
+          done < <(find . -name "package.json" \
+            -not -path "*/node_modules/*" \
+            -not -path "*/.git/*")
+
+          # Python — requirements.txt ou setup.py
+          if [ -f "requirements.txt" ]; then
+            echo "🐍 Detectado: Python (requirements.txt)"
+            pip install -r requirements.txt 2>/dev/null || echo "⚠ pip install falhou"
+          elif [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+            echo "🐍 Detectado: Python (setup.py/pyproject.toml)"
+            pip install -e . 2>/dev/null || echo "⚠ pip install falhou"
+          fi
+
+          # Ruby — Gemfile
+          if [ -f "Gemfile" ]; then
+            echo "💎 Detectado: Ruby (Gemfile)"
+            export BUNDLE_FORCE_RUBY_PLATFORM=1
+            bundle lock 2>/dev/null \
+              || bundle lock --add-platform ruby 2>/dev/null \
+              || bundle install --without development test 2>/dev/null \
+              || echo "⚠ bundle falhou"
+          fi
+
+          echo "✓ Geradores executados"
+
+      - name: Commitar e Push
+        if: steps.encontrar.outputs.pasta != ''
+        env:
+          BRANCH_REF: ${{ steps.resolver.outputs.branch_ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --staged --quiet; then
+            echo "Nenhum novo arquivo ou alteração para commitar."
+          else
+            git commit -m "chore: gera lockfiles de dependências"
+            git push origin "HEAD:$BRANCH_REF"
+            echo "✓ Lockfiles commitados com sucesso."
+          fi
