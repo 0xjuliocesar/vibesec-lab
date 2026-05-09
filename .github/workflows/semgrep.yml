@@ -1,4 +1,5 @@
 name: "Semgrep"
+run-name: "Semgrep · PR #${{ inputs.pr_number }}"
 
 on:
   workflow_dispatch:
