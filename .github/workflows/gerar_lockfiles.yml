@@ -1,4 +1,5 @@
 name: "Gerar Lockfiles"
+run-name: "Lockfiles · ${{ inputs.branch_ref || format('PR #{0}', inputs.pr_number) }}"
 
 on:
   workflow_dispatch:
