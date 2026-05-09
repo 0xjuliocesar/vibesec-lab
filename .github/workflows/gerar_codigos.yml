@@ -1,4 +1,5 @@
 name: "Geração e Coleta de Código"
+run-name: "Coleta · Prompt: ${{ inputs.prompt }} · Modelos: ${{ inputs.modelos }}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Disparo manual para garantir controle total sobre quando a coleta acontece.
