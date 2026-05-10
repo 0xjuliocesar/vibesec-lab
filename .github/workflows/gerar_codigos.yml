@@ -28,7 +28,6 @@ jobs:
   coleta:
     name: Gerar código via LLMs e abrir PRs
     runs-on: ubuntu-latest
-    timeout-minutes: 60
 
     steps:
       - name: Checkout do repositório
